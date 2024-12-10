@@ -18,11 +18,13 @@ rm -rf feeds/packages/net/smartdns
 rm -rf feeds/luci/themes/luci-theme-argon
 rm -rf feeds/luci/applications/luci-app-mosdns
 rm -rf feeds/luci/applications/luci-app-netdata
+rm -rf feeds/package/helloworld
+
 
 # kenzok8依赖清除，防止冲突
-rm -rf feeds/packages/net/{xray*,v2ray*,v2ray*,sing*,passwall*}
+# rm -rf feeds/packages/net/{xray*,v2ray*,v2ray*,sing*,passwall*}
 
-# Git稀疏克隆，只克隆指定目录到本地
+# Git稀疏克隆，只克隆指定目录到本地/package 目录下
 function git_sparse_clone() {
   branch="$1" repourl="$2" && shift 2
   git clone --depth=1 -b $branch --single-branch --filter=blob:none --sparse $repourl
@@ -32,23 +34,52 @@ function git_sparse_clone() {
   cd .. && rm -rf $repodir
 }
 
+
+
+# gpt 克隆
+# Git稀疏克隆，haibo  目录
+function git_pas_clone() {
+  branch="$1" repourl="$2" && shift 2
+  git clone --depth=1 -b $branch --single-branch --filter=blob:none --sparse $repourl
+  repodir=$(echo $repourl | awk -F '/' '{print $(NF)}')
+  cd $repodir && git sparse-checkout set $@
+  mkdir -p "../package/openwrt-packages/"
+  mv -f $@ ../package/openwrt-packages/
+  cd .. && rm -rf $repodir
+}
+
+
+
+
+
+
 # ------------------------Alan的插件-----------------------------1.仓库根目录用 git clone           
 # ---------------------------------------------------------------2.多目录指定或要进下级目录 用 svn export
 # ---------------------------------------------------------------3.依赖包用echo指定到feeds，会自动安装依赖，clone 或者 svn export 指定luci插件
 # 腾讯云DDNS
 git clone --depth=1 https://github.com/Alan-tantcw/luci-app-tencentddns package/luci-app-tencentddns
-# ipsec插件
-svn export https://github.com/Lienol/openwrt-package/trunk/luci-app-ipsec-server package/luci-app-ipsec-server
+# ipsec插件  vpn
+git_sparse_clone main https://github.com/Lienol/openwrt-package luci-app-ipsec-server
 # softEther (不启用)
-svn export https://github.com/Lienol/openwrt-package/trunk/luci-app-softethervpn package/luci-app-softethervpn
-# 引用其他源-----------------------------------------------luci-app-passwall-----------------------------------------------
+# svn export https://github.com/Lienol/openwrt-package/trunk/luci-app-softethervpn package/luci-app-softethervpn
+
 # 科学上网插件
-# git clone --depth=1 -b main https://github.com/fw876/helloworld package/luci-app-ssr-plus
-# git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall-packages package/openwrt-passwall
-# git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall package/luci-app-passwall
-# git clone --depth=1 https://github.com/xiaorouji/openwrt-passwall2 package/luci-app-passwall2
-# git_sparse_clone master https://github.com/vernesong/OpenClash luci-app-openclash
-svn export https://github.com/haiibo/packages/trunk/luci-app-vssr package/luci-app-vssr
+# #方案1  方案2 --------------------------------ssr-------------------------------------------------------------
+# git clone --depth=1 https://github.com/fw876/helloworld package/helloworld
+
+# #方案2 --------------------------------passwall---------------------------------------------------------------
+git_pas_clone master https://github.com/haiibo/openwrt-packages openwrt-passwall
+git_pas_clone master https://github.com/haiibo/openwrt-packages luci-app-passwall
+
+# #方案3-----------------------------------vssr--------------------------------------------------------------------
+# git clone --depth=1 https://github.com/fw876/helloworld package/openwrt-packages/helloworld
+# git clone --depth=1 https://github.com/ipenwrt/luci-app-vssr package/openwrt-packages/luci-app-vssr
+# git_pas_clone main https://github.com/kenzok8/small-package lua-maxminddb
+
+# #docker---
+# git_sparse_clone main https://github.com/kenzok8/small-package docker
+# git_sparse_clone main https://github.com/kenzok8/small-package dockerd
+# git_sparse_clone main https://github.com/kenzok8/small-package luci-app-dockerman
 
 
 # 添加额外插件
@@ -58,10 +89,12 @@ git clone --depth=1 https://github.com/kongfl888/luci-app-adguardhome package/lu
 
 
 # Themes
-git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
+# git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
+# git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
+git clone --depth=1 -b openwrt-24.10 https://github.com/sbwml/luci-theme-argon.git package/luci-theme-argon
 
 # 更改 Argon 主题背景
-cp -f $GITHUB_WORKSPACE/images/bg1.jpg package/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
+cp -f $GITHUB_WORKSPACE/images/bg.webp package/luci-theme-argon/luci-theme-argon/htdocs/luci-static/argon/img/bg.webp
 
 # SmartDNS
 git clone --depth=1 -b lede https://github.com/pymumu/luci-app-smartdns package/luci-app-smartdns
@@ -71,22 +104,23 @@ git clone --depth=1 https://github.com/pymumu/openwrt-smartdns package/smartdns
 git clone --depth=1 https://github.com/ximiTech/luci-app-msd_lite package/luci-app-msd_lite
 git clone --depth=1 https://github.com/ximiTech/msd_lite package/msd_lite
 
-# MosDNS
-svn export https://github.com/sbwml/luci-app-mosdns/trunk/luci-app-mosdns package/luci-app-mosdns
-svn export https://github.com/sbwml/luci-app-mosdns/trunk/mosdns package/mosdns
+# MosDNS   svn 类型下载不到 因本身无用 2024.12.04  取消 
+# svn export https://github.com/sbwml/luci-app-mosdns/trunk/luci-app-mosdns package/luci-app-mosdns
+# svn export https://github.com/sbwml/luci-app-mosdns/trunk/mosdns package/mosdns
 
 # Alist
-git clone --depth=1 https://github.com/sbwml/luci-app-alist package/luci-app-alist
+# git clone --depth=1 https://github.com/sbwml/luci-app-alist package/luci-app-alist
+git clone --depth=1 https://github.com/oppen321/luci-app-alist package/luci-app-alist
 
 # iStore
 git_sparse_clone main https://github.com/linkease/istore-ui app-store-ui
 git_sparse_clone main https://github.com/linkease/istore luci
 
 # 在线用户
-svn export https://github.com/haiibo/packages/trunk/luci-app-onliner package/luci-app-onliner
-sed -i '$i uci set nlbwmon.@nlbwmon[0].refresh_interval=2s' package/lean/default-settings/files/zzz-default-settings
-sed -i '$i uci commit nlbwmon' package/lean/default-settings/files/zzz-default-settings
-chmod 755 package/luci-app-onliner/root/usr/share/onliner/setnlbw.sh
+# svn export https://github.com/haiibo/packages/trunk/luci-app-onliner package/luci-app-onliner
+# sed -i '$i uci set nlbwmon.@nlbwmon[0].refresh_interval=2s' package/lean/default-settings/files/zzz-default-settings
+# sed -i '$i uci commit nlbwmon' package/lean/default-settings/files/zzz-default-settings
+# chmod 755 package/luci-app-onliner/root/usr/share/onliner/setnlbw.sh
 
 # x86 型号只显示 CPU 型号
 sed -i 's/${g}.*/${a}${b}${c}${d}${e}${f}${hydrid}/g' package/lean/autocore/files/x86/autocore
@@ -126,3 +160,4 @@ sed -i 's|admin\\|admin\\/services\\|g' feeds/luci/applications/luci-app-dockerm
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
+make -j4
