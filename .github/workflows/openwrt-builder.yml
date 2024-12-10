@@ -13,8 +13,10 @@
 name: OpenWrt Builder
 
 on:
-  repository_dispatch:
   workflow_dispatch:
+  schedule:
+    - cron: 1 19 * * *
+
 
 env:
   REPO_URL: https://github.com/coolsnowwolf/lede
