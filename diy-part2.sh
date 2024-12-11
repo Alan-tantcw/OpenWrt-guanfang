@@ -22,5 +22,5 @@ rm -rf feeds/package/helloworld
 
 
 # kenzok8依赖清除，防止冲突
-rm -rf feeds/packages/{adguardhome,v2ray*,alist,luci-app-alist,*aliyundrive*}
+rm -rf feeds/packages/{adguardhome,v2ray*,alist,luci-app-alist,*aliyundrive*,haproxy}
 rm -rf feeds/smpackage/{base-files,dnsmasq,firewall*,fullconenat,libnftnl,nftables,ppp,opkg,ucl,upx,vsftpd*,miniupnpd-iptables,wireless-regdb}
