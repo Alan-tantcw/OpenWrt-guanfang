@@ -94,7 +94,7 @@ git clone --depth=1 https://github.com/kongfl888/luci-app-adguardhome package/lu
 git clone --depth=1 -b openwrt-24.10 https://github.com/sbwml/luci-theme-argon.git package/luci-theme-argon
 
 # 更改 Argon 主题背景
-cp -f $GITHUB_WORKSPACE/images/bg.webp package/luci-theme-argon/luci-theme-argon/htdocs/luci-static/argon/img/bg.webp
+cp -f $GITHUB_WORKSPACE/images/bg1.jpg package/luci-theme-argon/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
 
 # SmartDNS
 git clone --depth=1 -b lede https://github.com/pymumu/luci-app-smartdns package/luci-app-smartdns
