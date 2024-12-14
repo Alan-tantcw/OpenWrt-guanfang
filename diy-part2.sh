@@ -83,14 +83,9 @@ git_pas_clone master https://github.com/haiibo/openwrt-packages luci-app-passwal
 
 
 # 添加额外插件
-git clone --depth=1 https://github.com/kongfl888/luci-app-adguardhome package/luci-app-adguardhome
-# git clone --depth=1 https://github.com/Jason6111/luci-app-netdata package/luci-app-netdata
-# svn export https://github.com/syb999/openwrt-19.07.1/trunk/package/network/services/msd_lite package/msd_lite
-
+# git clone --depth=1 https://github.com/kongfl888/luci-app-adguardhome package/luci-app-adguardhome
 
 # Themes
-# git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
-# git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 git clone --depth=1 -b openwrt-24.10 https://github.com/sbwml/luci-theme-argon.git package/luci-theme-argon
 
 # 更改 Argon 主题背景
