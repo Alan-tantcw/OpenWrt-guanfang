@@ -1,7 +1,9 @@
 #!/bin/bash
+# https://github.com/kenzok8/small-package    kenzok8包
+
 
 # 修改默认IP
-sed -i 's/192.168.1.1/11.1.1.1/g' package/base-files/files/bin/config_generate
+sed -i 's/192\.168\.1\.1/11.1.1.1/g' package/base-files/files/bin/config_generate
 # 禁用ipv6
 sed -i "/ip6assign='60'/d" package/base-files/files/bin/config_generate
 
@@ -18,7 +20,8 @@ rm -rf feeds/packages/net/smartdns
 rm -rf feeds/luci/themes/luci-theme-argon
 rm -rf feeds/luci/applications/luci-app-mosdns
 rm -rf feeds/luci/applications/luci-app-netdata
-rm -rf feeds/package/helloworld
+rm -rf feeds/packages/helloworld
+rm -rf feeds/packages/net/ddns-scripts
 
 
 # kenzok8依赖清除，防止冲突
@@ -51,15 +54,16 @@ function git_pas_clone() {
 
 
 
-
-
 # ------------------------Alan的插件-----------------------------1.仓库根目录用 git clone           
 # ---------------------------------------------------------------2.多目录指定或要进下级目录 用 svn export
 # ---------------------------------------------------------------3.依赖包用echo指定到feeds，会自动安装依赖，clone 或者 svn export 指定luci插件
 # 腾讯云DDNS
 git clone --depth=1 https://github.com/Alan-tantcw/luci-app-tencentddns package/luci-app-tencentddns
-# ipsec插件  vpn
+# ipsec插件 pptp vpn
 git_sparse_clone main https://github.com/Lienol/openwrt-package luci-app-ipsec-server
+git_sparse_clone main https://github.com/kenzok8/small-package luci-app-pptp-server
+# ddns-scripts
+git_sparse_clone main https://github.com/kenzok8/small-package ddns-scripts
 # softEther (不启用)
 # svn export https://github.com/Lienol/openwrt-package/trunk/luci-app-softethervpn package/luci-app-softethervpn
 
@@ -72,24 +76,25 @@ git_pas_clone master https://github.com/haiibo/openwrt-packages openwrt-passwall
 git_pas_clone master https://github.com/haiibo/openwrt-packages luci-app-passwall
 
 # #方案3-----------------------------------vssr--------------------------------------------------------------------
-# git clone --depth=1 https://github.com/fw876/helloworld package/openwrt-packages/helloworld
-# git clone --depth=1 https://github.com/ipenwrt/luci-app-vssr package/openwrt-packages/luci-app-vssr
-# git_pas_clone main https://github.com/kenzok8/small-package lua-maxminddb
-
-# #docker---
-# git_sparse_clone main https://github.com/kenzok8/small-package docker
-# git_sparse_clone main https://github.com/kenzok8/small-package dockerd
-# git_sparse_clone main https://github.com/kenzok8/small-package luci-app-dockerman
+git clone --depth=1 https://github.com/fw876/helloworld package/openwrt-packages/helloworld
+git clone --depth=1 https://github.com/ipenwrt/luci-app-vssr package/openwrt-packages/luci-app-vssr
+git_pas_clone main https://github.com/kenzok8/small-package lua-maxminddb
+git_pas_clone main https://github.com/kenzok8/small-package shadowsocksr-libev
 
 
 # 添加额外插件
-# git clone --depth=1 https://github.com/kongfl888/luci-app-adguardhome package/luci-app-adguardhome
+git clone --depth=1 https://github.com/kongfl888/luci-app-adguardhome package/luci-app-adguardhome
+# git clone --depth=1 https://github.com/Jason6111/luci-app-netdata package/luci-app-netdata
+# svn export https://github.com/syb999/openwrt-19.07.1/trunk/package/network/services/msd_lite package/msd_lite
+
 
 # Themes
+# git clone --depth=1 -b 18.06 https://github.com/jerrykuku/luci-theme-argon package/luci-theme-argon
+# git clone --depth=1 https://github.com/jerrykuku/luci-app-argon-config package/luci-app-argon-config
 git clone --depth=1 -b openwrt-24.10 https://github.com/sbwml/luci-theme-argon.git package/luci-theme-argon
 
 # 更改 Argon 主题背景
-cp -f $GITHUB_WORKSPACE/images/bg1.jpg package/luci-theme-argon/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg
+cp -f $GITHUB_WORKSPACE/images/bg.webp package/luci-theme-argon/luci-theme-argon/htdocs/luci-static/argon/img/bg.webp
 
 # SmartDNS
 git clone --depth=1 -b lede https://github.com/pymumu/luci-app-smartdns package/luci-app-smartdns
@@ -104,6 +109,7 @@ git clone --depth=1 https://github.com/ximiTech/msd_lite package/msd_lite
 # svn export https://github.com/sbwml/luci-app-mosdns/trunk/mosdns package/mosdns
 
 # Alist
+# git clone --depth=1 https://github.com/sbwml/luci-app-alist package/luci-app-alist
 git clone --depth=1 https://github.com/oppen321/luci-app-alist package/luci-app-alist
 
 # iStore
@@ -127,9 +133,23 @@ date_version=$(date +"%y.%m.%d")
 orig_version=$(cat "package/lean/default-settings/files/zzz-default-settings" | grep DISTRIB_REVISION= | awk -F "'" '{print $2}')
 sed -i "s/${orig_version}/R${date_version} by Alan.Tan/g" package/lean/default-settings/files/zzz-default-settings
 
+# 修复 hostapd 报错
+cp -f $GITHUB_WORKSPACE/scripts/011-fix-mbo-modules-build.patch package/network/services/hostapd/patches/011-fix-mbo-modules-build.patch
+
+# 修改 Makefile
+find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/..\/..\/luci.mk/$(TOPDIR)\/feeds\/luci\/luci.mk/g' {}
+find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/..\/..\/lang\/golang\/golang-package.mk/$(TOPDIR)\/feeds\/packages\/lang\/golang\/golang-package.mk/g' {}
+find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/PKG_SOURCE_URL:=@GHREPO/PKG_SOURCE_URL:=https:\/\/github.com/g' {}
+find package/*/ -maxdepth 2 -path "*/Makefile" | xargs -i sed -i 's/PKG_SOURCE_URL:=@GHCODELOAD/PKG_SOURCE_URL:=https:\/\/codeload.github.com/g' {}
 
 # 取消主题默认设置
 find package/luci-theme-*/* -type f -name '*luci-theme-*' -print -exec sed -i '/set luci.main.mediaurlbase/d' {} \;
+
+# 调整 Docker 到 服务 菜单
+# sed -i 's/"admin"/"admin", "services"/g' feeds/luci/applications/luci-app-dockerman/luasrc/controller/*.lua
+# sed -i 's/"admin"/"admin", "services"/g; s/admin\//admin\/services\//g' feeds/luci/applications/luci-app-dockerman/luasrc/model/cbi/dockerman/*.lua
+# sed -i 's/admin\//admin\/services\//g' feeds/luci/applications/luci-app-dockerman/luasrc/view/dockerman/*.htm
+# sed -i 's|admin\\|admin\\/services\\|g' feeds/luci/applications/luci-app-dockerman/luasrc/view/dockerman/container.htm
 
 # 调整 ZeroTier 到 服务 菜单
 # sed -i 's/vpn/services/g; s/VPN/Services/g' feeds/luci/applications/luci-app-zerotier/luasrc/controller/zerotier.lua
@@ -138,3 +158,5 @@ find package/luci-theme-*/* -type f -name '*luci-theme-*' -print -exec sed -i '/
 # 取消对 samba4 的菜单调整
 # sed -i '/samba4/s/^/#/' package/lean/default-settings/files/zzz-default-settings
 
+./scripts/feeds update -a
+./scripts/feeds install -a
